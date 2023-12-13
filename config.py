@@ -1,0 +1,7 @@
+import os
+
+PG_USER
+PG_PASSWORD
+PG_HOST
+POG_PORT
+PG_DB
