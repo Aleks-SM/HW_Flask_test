@@ -1,6 +1,7 @@
-import flask
+from app import app
 
-app = flask.Flask('app')
+
+# app = flask.Flask('app')
 
 @app.before_request
 def before_request():
@@ -9,23 +10,23 @@ def before_request():
 
 
 @app.after_request
-def after_request(response: flask.Response):
+def after_request(response: Response):
     request.session.close()
     return response
 
 
-@app.errorhandler(HttpError)
-def error_handler(error):
-    response = jsonify({"error": error.description})
-    response.status_code = error.status_code
-    return response
+# @app.errorhandler(HttpError)
+# def error_handler(error):
+#     response = jsonify({"error": error.description})
+#     response.status_code = error.status_code
+#     return response
 
-
-user_view = UserView.as_view("user_view")
-
-app.add_url_rule("/users/<int:user_id>", view_func=user_view, methods=["GET", "PATCH", "DELETE"])
-app.add_url_rule("/users", view_func=user_view, methods=["POST"])
-app.add_url_rule("/login", view_func=LoginView.as_view('login_view'), methods=["POST"])
+#
+# user_view = UserView.as_view("user_view")
+#
+# app.add_url_rule("/users/<int:user_id>", view_func=user_view, methods=["GET", "PATCH", "DELETE"])
+# app.add_url_rule("/users", view_func=user_view, methods=["POST"])
+# app.add_url_rule("/login", view_func=LoginView.as_view('login_view'), methods=["POST"])
 
 if __name__ == '__main__':
   app.run()

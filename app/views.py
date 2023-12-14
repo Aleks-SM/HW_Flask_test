@@ -1,1 +1,72 @@
+from app import app
+from models import User, Adverts, Session
+from error import HttpError
+from flask import views, jsonify, request
+from sqlalchemy.exc import IntegrityError
+
+
+
+def get_user(user_id: int):
+    user = request.session.get(User, user_id)
+    if user is None:
+        raise HttpError(404, "user not found")
+    return user
+
+
+def add_user(user: User):
+    try:
+        request.session.add(user)
+        request.session.commit()
+    except IntegrityError:
+        raise HttpError(409, "user already exists")
+
+
+class AbstractView(views.MethodView):
+    @property
+    def session(self) -> Session:
+        return request.session
+
+class UserView(AbstractView):
+    def get(self, user_id: int):
+        user = get_user(user_id)
+        return jsonify(user.dict)
+
+    def post(self):
+        user_data = validate(CreateUser, request.json)
+        user_data["password"] = hash_password(user_data["password"])
+        user = User(**user_data)
+        add_user(user)
+        return jsonify({"id": user.id})
+
+    def patch(self, user_id: int):
+        user = get_user(user_id)
+        user_data = validate(UpdateUser, request.json)
+        if "password" in user_data:
+            user_data["password"] = hash_password(user_data["password"])
+        for key, value in user_data.items():
+            setattr(user, key, value)
+            add_user(user)
+        return jsonify({"id": user.id})
+
+    def delete(self, user_id: int):
+        user = get_user(user_id)
+        self.session.delete(user)
+        self.session.commit()
+        return jsonify({"status": "ok"})
+
+class LoginView(AbstractView):
+    def post(self):
+        user_data = validate(LoginUser, request.json)
+        user_data["password"] = hash_password(user_data["password"])
+        user = User(**user_data)
+        add_user(user)
+        return jsonify({"id": user.id})
+
+
+user_view = UserView.as_view("user_view")
+login_view = LoginView.as_view("login_view")
+
+app.add_url_rule("/users/<int:user_id>", view_func=user_view, methods=["GET", "PATCH", "DELETE"])
+app.add_url_rule("/users", view_func=user_view, methods=["POST"])
+app.add_url_rule("/login", view_func=login_view, methods=["POST"])
 

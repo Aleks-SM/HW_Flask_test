@@ -24,8 +24,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     registration_time: Mapped[datetime.datetime] = mapped_column(DateTime, server_default=func.now())
   
-    posts = db.relationship('Post', backref = 'author', lazy = 'dynamic')
-    
+
     @property
     def dict(self):
         return {
@@ -53,5 +52,6 @@ class Adverts(Base):
             'date_post': self.date_post.isoformat()
         }
 
+    user = relationship('User', backref='user', lazy='dynamic')
 
 Base.metadata.create_all(bind=engine)
